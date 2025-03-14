@@ -129,6 +129,15 @@
         }
       }
     },
+    "Battery Information" : {
+
+    },
+    "Battery Settings" : {
+
+    },
+    "Battery Status" : {
+
+    },
     "Boost your productivity with Clipboard Manager" : {
 
     },
@@ -446,6 +455,9 @@
     "Low" : {
 
     },
+    "Low Power Mode" : {
+
+    },
     "Made with 🫶🏻 by not so boring not.people" : {
       "localizations" : {
         "en" : {
@@ -460,6 +472,9 @@
 
     },
     "Match real notch size" : {
+
+    },
+    "Max Capacity: %lld%%" : {
 
     },
     "Media" : {
@@ -803,6 +818,9 @@
 
     },
     "TheBoringNotch" : {
+
+    },
+    "Time to Full Charge: %lld min" : {
 
     },
     "Toggle Notch Open:" : {
