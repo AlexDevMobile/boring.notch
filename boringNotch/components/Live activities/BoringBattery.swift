@@ -1,35 +1,81 @@
 import SwiftUI
 import Defaults
 
-/// A view that displays the battery status with an icon and charging indicator.
+
+/// A SwiftUI view that represents the battery status or related information.
+/// This view can be used to display battery-related data in a live activity or other UI components.
 struct BatteryView: View {
 
-    var levelBattery: Float
-    var isPluggedIn: Bool
-    var isCharging: Bool
-    var isInLowPowerMode: Bool
-    var batteryWidth: CGFloat = 26
-    var isForNotification: Bool
+    /// The current battery level.
+    /// - Value range: `0` (empty) to `100` (fully charged).
+    let levelBattery: Float
 
-    var animationStyle: BoringAnimations = BoringAnimations()
+    /// Indicates whether the device is plugged into a power source.
+    let isPluggedIn: Bool
 
-    var icon: String = "battery.0"
+    /// Indicates whether the device is currently charging.
+    let isCharging: Bool
 
-    /// Determines the icon to display when charging.
-    var iconStatus: String {
+    /// Indicates if the device is in Low Power Mode.
+    /// - Note: This can affect battery usage indicators.
+    let isInLowPowerMode: Bool
+
+    /// Represents the width of the battery indicator as a CGFloat.
+    let batteryWidth: CGFloat
+
+    /// Specifies whether the battery view is used in a notification.
+    /// - Important: This affects layout and animation behavior.
+    let isForNotification: Bool
+
+    /// Constants for battery visual dimensions
+    private struct BatteryDimensions {
+        /// Padding inside battery outline
+        static let horizontalPadding: CGFloat = 6
+        /// Battery height ratio relative to width
+        static let heightAdjustment: CGFloat = 2.75
+        /// Additional height reduction
+        static let heightOffset: CGFloat = 18
+        /// Standard size for status icons
+        static let iconSize: CGFloat = 17
+    }
+
+    /// The width of the battery fill area, calculated based on the battery level.
+    /// - Returns: A `CGFloat` representing the width of the fill area.
+    private var batteryFillWidth: CGFloat {
+        return (CGFloat(levelBattery) / 100) * (batteryWidth - BatteryDimensions.horizontalPadding)
+    }
+    
+    /// The height of the battery indicator
+    /// - Returns: A `CGFloat` representing the height of the battery.
+    private var batteryHeight: CGFloat {
+        return (batteryWidth - BatteryDimensions.heightAdjustment) - BatteryDimensions.heightOffset
+    }
+
+    /// The name of the battery status icon asset, based on the charging state.
+    ///
+    /// - Returns: A string representing the asset name, such as:
+    ///   - `"boringBatteryStatus.bolt"` ⚡ if charging
+    ///   - `"boringBatteryStatus.plug"` 🔌 if plugged in
+    ///   - `""` if none
+    private var powerStatusIconAssetName: String {
         if isCharging {
-            return "bolt"
+            return "boringBatteryStatus.bolt"
         }
         else if isPluggedIn {
-            return "plug"
+            return "boringBatteryStatus.plug"
         }
         else {
             return ""
         }
     }
 
-    /// Determines the color of the battery based on its status.
-    var batteryColor: Color {
+    /// Determines the color representing the battery's current state.
+    /// - Returns: A `Color` representing the battery state:
+    ///   - Yellow if in Low Power Mode
+    ///   - Red if battery level is 20% or lower and not charging
+    ///   - Green if charging, plugged in, or fully charged
+    ///   - White otherwise
+    private var batteryStateColor: Color {
         if isInLowPowerMode {
             return .yellow
         } else if levelBattery <= 20 && !isCharging && !isPluggedIn {
@@ -40,11 +86,11 @@ struct BatteryView: View {
             return .white
         }
     }
-
+    
     var body: some View {
         ZStack(alignment: .leading) {
 
-            Image(systemName: icon)
+            Image(systemName: "battery.0")
                 .resizable()
                 .fontWeight(.thin)
                 .aspectRatio(contentMode: .fit)
@@ -54,31 +100,34 @@ struct BatteryView: View {
                 )
 
             RoundedRectangle(cornerRadius: 2.5)
-                .fill(batteryColor)
+                .fill(batteryStateColor)
                 .frame(
-                    width: CGFloat(((CGFloat(CFloat(levelBattery)) / 100) * (batteryWidth - 6))),
-                    height: (batteryWidth - 2.75) - 18
+                    width: batteryFillWidth,
+                    height: batteryHeight
                 )
                 .padding(.leading, 2)
 
-            if iconStatus != "" && (isForNotification || Defaults[.showPowerStatusIcons]) {
+            if powerStatusIconAssetName != "" && (isForNotification || Defaults[.showPowerStatusIcons]) {
                 ZStack {
-                    Image(iconStatus)
+                    Image(powerStatusIconAssetName)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
                         .foregroundColor(.white)
                         .frame(
-                            width: 17,
-                            height: 17
+                            width: BatteryDimensions.iconSize,
+                            height: BatteryDimensions.iconSize
                         )
                 }
                 .frame(width: batteryWidth, height: batteryWidth)
             }
+            
         }
+        .accessibilityLabel("Battery")
+        .accessibilityValue("\(Int(levelBattery))% \(isCharging ? "charging" : isPluggedIn ? "plugged in" : "")")
     }
+    
 }
 
-/// A view that displays detailed battery information and settings.
 struct BatteryMenuView: View {
     
     var isPluggedIn: Bool
@@ -175,6 +224,8 @@ struct BoringBatteryView: View {
     
     @State private var showPopupMenu: Bool = false
     @State private var isPressed: Bool = false
+    
+    var onHoverMenuChange: (Bool) -> Void = { _ in }
 
     var body: some View {
         HStack {
@@ -193,7 +244,7 @@ struct BoringBatteryView: View {
             )
         }
         .scaleEffect(isPressed ? 0.95 : 1.0)
-        .animation(.easeInOut(duration: 0.2), value: isPressed)
+        .animation(.spring(duration: 0.2), value: isPressed)
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in
@@ -220,6 +271,12 @@ struct BoringBatteryView: View {
                 isInLowPowerMode: isInLowPowerMode,
                 onDismiss: { showPopupMenu = false }
             )
+            .onAppear() {
+                onHoverMenuChange(true)
+            }
+            .onHover { hovering in
+                onHoverMenuChange(hovering)
+            }
         }
     }
 }

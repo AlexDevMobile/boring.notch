@@ -10,7 +10,7 @@ import SwiftUI
 
 struct BoringHeader: View {
     @EnvironmentObject var vm: BoringViewModel
-    @ObservedObject var batteryModel = BatteryStatusViewModel.shared
+    @StateObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @StateObject var tvm = TrayDrop.shared
     var body: some View {
@@ -63,7 +63,10 @@ struct BoringHeader: View {
                             levelBattery: batteryModel.levelBattery,
                             maxCapacity: batteryModel.maxCapacity,
                             timeToFullCharge: batteryModel.timeToFullCharge,
-                            isForNotification: false
+                            isForNotification: false,
+                            onHoverMenuChange: { isHovering in
+                                batteryModel.isHoveringMenu = isHovering
+                            }
                         )
                     }
                 }

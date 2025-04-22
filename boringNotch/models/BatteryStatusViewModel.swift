@@ -7,6 +7,8 @@ import Defaults
 /// A view model that manages and monitors the battery status of the device
 class BatteryStatusViewModel: ObservableObject {
     
+    static let shared = BatteryStatusViewModel()
+    
     private var wasCharging: Bool = false
     private var powerSourceChangedCallback: IOPowerSourceCallbackType?
     private var runLoopSource: Unmanaged<CFRunLoopSource>?
@@ -22,11 +24,10 @@ class BatteryStatusViewModel: ObservableObject {
     @Published private(set) var isInitial: Bool = false
     @Published private(set) var timeToFullCharge: Int = 0
     @Published private(set) var statusText: String = ""
+    @Published var isHoveringMenu: Bool = false
     
     private let managerBattery = BatteryActivityManager.shared
     private var managerBatteryId: Int?
-    
-    static let shared = BatteryStatusViewModel()
 
     /// Initializes the view model with a given BoringViewModel instance
     /// - Parameter vm: The BoringViewModel instance

@@ -19,13 +19,15 @@ struct ContentView: View {
 
     @ObservedObject var coordinator = BoringViewCoordinator.shared
     @ObservedObject var musicManager = MusicManager.shared
-    @ObservedObject var batteryModel = BatteryStatusViewModel.shared
+    @StateObject var batteryModel = BatteryStatusViewModel.shared
 
     @State private var isHovering: Bool = false
     @State private var hoverWorkItem: DispatchWorkItem?
     @State private var debounceWorkItem: DispatchWorkItem?
     
     @State private var isHoverStateChanging: Bool = false
+    @State private var isNotchHovering: Bool = false
+    @State private var isMenuHovering: Bool = false
 
     @State private var gestureProgress: CGFloat = .zero
 
@@ -68,7 +70,8 @@ struct ContentView: View {
                 }
                 .conditionalModifier(Defaults[.openNotchOnHover]) { view in
                     view.onHover { hovering in
-                        handleHover(hovering)
+                        isNotchHovering = hovering
+                        updateHoverState()
                     }
                 }
                 .conditionalModifier(!Defaults[.openNotchOnHover]) { view in
@@ -148,6 +151,10 @@ struct ContentView: View {
         .background(dragDetector)
         .environmentObject(vm)
         .environmentObject(webcamManager)
+        .onChange(of: batteryModel.isHoveringMenu) { _, newValue in
+            // Update hover state when the battery menu is hovered
+            updateHoverState()
+        }
     }
 
     @ViewBuilder
@@ -374,13 +381,15 @@ struct ContentView: View {
         let shouldExtendHover = vm.closedNotchSize.height == 0 && Defaults[.extendHoverArea]
         return shouldExtendHover ? safeAreaNotchHeight : 0
     }
-
+    
+    @State private  var aux: Bool = false
     // MARK: - Hover Management
     
     /// Handle hover state changes with debouncing
-    private func handleHover(_ hovering: Bool) {
+    private func updateHoverState() {
         // Don't process events if we're already transitioning
-        if isHoverStateChanging { return }
+        if isHoverStateChanging || batteryModel.isHoveringMenu { return }
+        
         
         // Cancel any pending tasks
         hoverWorkItem?.cancel()
@@ -388,7 +397,7 @@ struct ContentView: View {
         debounceWorkItem?.cancel()
         debounceWorkItem = nil
         
-        if hovering {
+        if isNotchHovering {
             // Handle mouse enter
             withAnimation(.bouncy.speed(1.2)) {
                 isHovering = true
@@ -417,9 +426,13 @@ struct ContentView: View {
                 execute: task
             )
         } else {
+            
             // Handle mouse exit with debounce to prevent flickering
             let debounce = DispatchWorkItem {
                 // ContentView is a struct, so we don't use weak self here
+                
+                // Cancel if the mouse is still hovering in the menu battery
+                if batteryModel.isHoveringMenu { return }
                 
                 // Update visual state
                 withAnimation(.bouncy.speed(1.2)) {
