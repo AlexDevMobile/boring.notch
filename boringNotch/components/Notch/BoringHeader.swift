@@ -55,7 +55,7 @@ struct BoringHeader: View {
                         .buttonStyle(PlainButtonStyle())
                     }
                     if Defaults[.showBatteryIndicator] {
-                        BoringBatteryView(
+                        BatteryIndicatorControl(
                             batteryWidth: 30,
                             isCharging: batteryModel.isCharging,
                             isInLowPowerMode: batteryModel.isInLowPowerMode,

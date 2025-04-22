@@ -181,7 +181,7 @@ struct ContentView: View {
                                 .frame(width: vm.closedNotchSize.width + 5)
 
                             HStack {
-                                BoringBatteryView(
+                                BatteryIndicatorControl(
                                     batteryWidth: 30,
                                     isCharging: batteryModel.isCharging,
                                     isInLowPowerMode: batteryModel.isInLowPowerMode,
