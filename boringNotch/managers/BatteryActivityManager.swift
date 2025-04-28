@@ -312,7 +312,7 @@ class BatteryActivityManager {
 }
 
 /// Struct to hold battery information
-struct BatteryInfo {
+internal struct BatteryInfo {
     var isPluggedIn: Bool
     var isCharging: Bool
     var currentCapacity: Float

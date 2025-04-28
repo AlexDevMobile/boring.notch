@@ -21,6 +21,7 @@ class BatteryStatusViewModel: ObservableObject {
     @Published private(set) var statusText: String = ""
     @Published var isHoveringMenu: Bool = false
 
+    /// The battery state object that contains all relevant battery information
     var batteryState: BatteryState {
         return BatteryState(
             level: levelBattery,
@@ -32,8 +33,9 @@ class BatteryStatusViewModel: ObservableObject {
         )
     }
     
-    
+    /// The battery activity manager instance to monitor battery events
     private let managerBattery = BatteryActivityManager.shared
+    /// The ID of the battery activity manager observer
     private var managerBatteryId: Int?
 
     /// Initializes the view model with a given BoringViewModel instance
@@ -63,47 +65,47 @@ class BatteryStatusViewModel: ObservableObject {
         switch event {
                 case .powerSourceChanged(let isPluggedIn):
                     print("🔌 Power source: \(isPluggedIn ? "Connected" : "Disconnected")")
-                    withAnimation {
-                        self.isPluggedIn = isPluggedIn
-                        self.statusText = isPluggedIn ? "Plugged In" : "Unplugged"
-                        self.notifyImportanChangeStatus()
-                    }
+                    animateStatusChange(
+                        property: { self.isPluggedIn = isPluggedIn },
+                        statusText: isPluggedIn ? "Plugged In" : "Unplugged", 
+                    )
                 
                 case .batteryLevelChanged(let level):
                     print("🔋 Battery level: \(Int(level))%")
-                    withAnimation {
-                        self.levelBattery = level
+                    let isCritical = level <= 10 && !isCharging && !isPluggedIn
+                    if isCritical {
+                        animateStatusChange(
+                            property: { self.levelBattery = level },
+                            statusText: "Battery Critical: \(Int(level))%",
+                        )
+                    }
+                    else {
+                        animatePropertyChange { self.levelBattery = level }
                     }
                     
                 case .lowPowerModeChanged(let isEnabled):
                     print("⚡ Low power mode: \(isEnabled ? "Enabled" : "Disabled")")
-                    self.notifyImportanChangeStatus()
-                    withAnimation {
-                        self.isInLowPowerMode = isEnabled
-                        self.statusText = "Low Power: \(self.isInLowPowerMode ? "On" : "Off")"
-                    }
+                    animateStatusChange(
+                        property: { self.isInLowPowerMode = isEnabled },
+                        statusText: "Low Power: \(isEnabled ? "On" : "Off")"
+                    )
                 
                 case .isChargingChanged(let isCharging):
                     print("🔌 Charging: \(isCharging ? "Yes" : "No")")
                     print("maxCapacity: \(self.maxCapacity)")
                     print("levelBattery: \(self.levelBattery)")
-                    self.notifyImportanChangeStatus()
-                    withAnimation {
-                        self.isCharging = isCharging
-                        self.statusText = isCharging ? "Charging battery" : (self.levelBattery < self.maxCapacity ? "Not charging" : "Full charge")
-                    }
+                    animateStatusChange(
+                        property: { self.isCharging = isCharging },
+                        statusText: isCharging ? "Charging battery" : (self.levelBattery < self.maxCapacity ? "Not charging" : "Full charge"),
+                    )
                 
                 case .timeToFullChargeChanged(let time):
                     print("🕒 Time to full charge: \(time) minutes")
-                    withAnimation {
-                        self.timeToFullCharge = time
-                    }
+                    animatePropertyChange { self.timeToFullCharge = time }
                 
                 case .maxCapacityChanged(let capacity):
                     print("🔋 Max capacity: \(capacity)")
-                    withAnimation {
-                        self.maxCapacity = capacity
-                    }
+                    animatePropertyChange { self.maxCapacity = capacity }
                 
                 case .error(let description):
                     print("⚠️ Error: \(description)")
@@ -122,15 +124,13 @@ class BatteryStatusViewModel: ObservableObject {
             self.maxCapacity = batteryInfo.maxCapacity
             self.statusText = batteryInfo.isPluggedIn ? "Plugged In" : "Unplugged"
         }
-        notifyImportanChangeStatus(delay: coordinator.firstLaunch ? 6 : 0.0)
+        notifyImportantChangeStatus(delay: coordinator.firstLaunch ? 6 : 0.0)
         withAnimation {
-            if self.isCharging {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                guard let self = self else { return }
+                if self.isCharging {
                     self.statusText = "Charging: Yes"
-                }
-            }
-            if self.isInLowPowerMode {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                } else if self.isInLowPowerMode {
                     self.statusText = "Low Power: On"
                 }
             }
@@ -139,9 +139,15 @@ class BatteryStatusViewModel: ObservableObject {
     
     /// Notifies important changes in the battery status with an optional delay
     /// - Parameter delay: The delay before notifying the change, default is 0.0
-    private func notifyImportanChangeStatus(delay: Double = 0.0) {
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+    private func notifyImportantChangeStatus(delay: Double = 0.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in
+            guard let self: BatteryStatusViewModel else { return }
             self.coordinator.toggleExpandingView(status: true, type: .battery)
+            NSAccessibility.post(
+                element: NSApp.mainWindow as Any,
+                notification: .announcementRequested,
+                userInfo: [.announcement: self.statusText]
+            )
         }
     }
 
@@ -152,4 +158,25 @@ class BatteryStatusViewModel: ObservableObject {
         }
     }
     
+}
+
+private extension BatteryStatusViewModel {
+    /// Animates a state change with status text update and optional notification
+    func animateStatusChange(
+        property: () -> Void,
+        statusText: String
+    ) {
+        withAnimation {
+            property()
+            self.statusText = statusText
+        }
+        notifyImportantChangeStatus()
+    }
+    
+    /// Animates a simple property change
+    func animatePropertyChange(_ changes: () -> Void) {
+        withAnimation {
+            changes()
+        }
+    }
 }

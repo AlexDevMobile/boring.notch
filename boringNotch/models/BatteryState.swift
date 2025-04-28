@@ -26,7 +26,7 @@ struct BatteryState {
     
     /// Minutes until battery is fully charged (0 if not charging)
     let timeToFullCharge: Int
-    
+
     /// Constants for battery thresholds
     struct Thresholds {
         static let low: Float = 20
@@ -78,4 +78,5 @@ struct BatteryState {
     var isInOptimizedCharging: Bool {
         !isCharging && isPluggedIn && level >= Thresholds.optimizedCharging
     }
+
 }
