@@ -14,23 +14,8 @@ import Defaults
 /// - Note: The view includes a popover menu that shows detailed battery information when tapped.
 struct BatteryIndicatorControl: View {
     
-    /// Indicates whether the device is currently charging.
-    let isCharging: Bool
-
-    /// Indicates whether the device is in Low Power Mode.
-    let isInLowPowerMode: Bool
-
-    /// Indicates whether the device is plugged into a power source.
-    let isPluggedIn: Bool
-
-    /// Represents the current battery level as a percentage (0.0 to 1.0).
-    let levelBattery: Float
-
-    /// Represents the maximum battery capacity of the device.
-    var maxCapacity: Float = 0
-
-    /// Represents the estimated time (in minutes) until the battery is fully charged.
-    var timeToFullCharge: Int = 0
+    /// The battery state containing all information about the battery
+    let batteryState: BatteryState
     
     /// The width of the battery indicator.
     /// This value determines the visual width of the battery component.
@@ -76,12 +61,12 @@ struct BatteryIndicatorControl: View {
 
     /// The normalized battery level, clamped between 0 and 100.
     private var normalizedBatteryLevel: Float {
-        return min(100, max(0, levelBattery))
+        return batteryState.normalizedLevel
     }
 
     /// Formats the battery percentage as a string.
     private var formattedBatteryPercentage: String {
-        return "\(Int(normalizedBatteryLevel))%"
+        return "\(batteryState.percentage)%"
     }
 
     var body: some View {
@@ -92,10 +77,7 @@ struct BatteryIndicatorControl: View {
                     .foregroundStyle(.white)
             }
             BatteryIconView(
-                levelBattery: levelBattery,
-                isPluggedIn: isPluggedIn,
-                isCharging: isCharging,
-                isInLowPowerMode: isInLowPowerMode,
+                batteryState: batteryState,
                 batteryWidth: batteryWidth,
                 isForNotification: isForNotification
             )
@@ -109,72 +91,106 @@ struct BatteryIndicatorControl: View {
             isPresented: $showPopupMenu,
             arrowEdge: .bottom) {
             BatteryDetailPopoverView(
-                isPluggedIn: isPluggedIn,
-                isCharging: isCharging,
-                levelBattery: levelBattery,
-                maxCapacity: maxCapacity,
-                timeToFullCharge: timeToFullCharge,
-                isInLowPowerMode: isInLowPowerMode,
+                batteryState: batteryState,
                 onDismiss: { showPopupMenu = false }
             )
-            .onAppear {
-                onHoverMenuChange(true)
+            .onDisappear{
+                onHoverMenuChange(false)
             }
             .onHover { hovering in
                 onHoverMenuChange(hovering)
             }
         }
         .accessibilityLabel("Battery Status")
-        .accessibilityValue("\(Int(levelBattery))% \(isCharging ? "charging" : isPluggedIn ? "plugged in" : "")")
+        .accessibilityValue(batteryState.accessibilityStatus)
         .accessibilityAction {
             showPopupMenu.toggle()
         }
     }
-    
 }
 
 
-#Preview("Critical Battery - 5%") {
+#Preview("Normal Battery - 75%") {
     BatteryIndicatorControl(
-        isCharging: false,
-        isInLowPowerMode: true,
-        isPluggedIn: false,
-        levelBattery: 5,
-        maxCapacity: 95,
-        timeToFullCharge: 0,
+        batteryState: BatteryState(
+            level: 75,
+            isPluggedIn: false,
+            isCharging: false,
+            isInLowPowerMode: false,
+            maxCapacity: 98,
+            timeToFullCharge: 0
+        ),
         batteryWidth: 30,
-        isForNotification: false,
-        onHoverMenuChange: { _ in }
-    ).frame(width: 200, height: 200)
+        isForNotification: false
+    )
+    .frame(width: 200, height: 50)
     .background(Color.black)
 }
 
-#Preview("Fast Charging - 45%") {
+#Preview("Low Battery - 15%") {
     BatteryIndicatorControl(
-        isCharging: true,
-        isInLowPowerMode: false,
-        isPluggedIn: true,
-        levelBattery: 45,
-        maxCapacity: 100,
-        timeToFullCharge: 35,
+        batteryState: BatteryState(
+            level: 15,
+            isPluggedIn: false,
+            isCharging: false,
+            isInLowPowerMode: true,
+            maxCapacity: 90,
+            timeToFullCharge: 0
+        ),
         batteryWidth: 30,
-        isForNotification: false,
-        onHoverMenuChange: { _ in }
-    ).frame(width: 200, height: 200)
+        isForNotification: false
+    )
+    .frame(width: 200, height: 50)
+    .background(Color.black)
+}
+
+#Preview("Charging - 45%") {
+    BatteryIndicatorControl(
+        batteryState: BatteryState(
+            level: 45,
+            isPluggedIn: true,
+            isCharging: true,
+            isInLowPowerMode: false,
+            maxCapacity: 95,
+            timeToFullCharge: 35
+        ),
+        batteryWidth: 30,
+        isForNotification: false
+    )
+    .frame(width: 200, height: 50)
     .background(Color.black)
 }
 
 #Preview("Full Battery - 100%") {
     BatteryIndicatorControl(
-        isCharging: false,
-        isInLowPowerMode: false,
-        isPluggedIn: true,
-        levelBattery: 100,
-        maxCapacity: 100,
-        timeToFullCharge: 0,
+        batteryState: BatteryState(
+            level: 100,
+            isPluggedIn: true,
+            isCharging: false,
+            isInLowPowerMode: false,
+            maxCapacity: 100,
+            timeToFullCharge: 0
+        ),
         batteryWidth: 30,
-        isForNotification: false,
-        onHoverMenuChange: { _ in }
-    ).frame(width: 200, height: 200)
+        isForNotification: false
+    )
+    .frame(width: 200, height: 50)
+    .background(Color.black)
+}
+
+#Preview("Notification View") {
+    BatteryIndicatorControl(
+        batteryState: BatteryState(
+            level: 65,
+            isPluggedIn: true,
+            isCharging: true,
+            isInLowPowerMode: false,
+            maxCapacity: 99,
+            timeToFullCharge: 35
+        ),
+        batteryWidth: 20,
+        isForNotification: true
+    )
+    .frame(width: 100, height: 50)
     .background(Color.black)
 }

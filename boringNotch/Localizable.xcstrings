@@ -32,16 +32,6 @@
     "%lld%%" : {
 
     },
-    "%lld%% %@" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "%1$lld%% %2$@"
-          }
-        }
-      }
-    },
     "• Bug fixes" : {
 
     },
@@ -206,6 +196,7 @@
 
     },
     "Charging" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -214,9 +205,6 @@
           }
         }
       }
-    },
-    "Charging on Hold: Desktop Mode" : {
-
     },
     "Check for updates" : {
       "extractionState" : "stale",
@@ -474,9 +462,6 @@
     "Low" : {
 
     },
-    "Low Power Mode" : {
-
-    },
     "Made with 🫶🏻 by not so boring not.people" : {
       "localizations" : {
         "en" : {
@@ -655,9 +640,6 @@
           }
         }
       }
-    },
-    "Plugged In" : {
-
     },
     "Progress bar" : {
       "localizations" : {
@@ -849,9 +831,6 @@
 
     },
     "TheBoringNotch" : {
-
-    },
-    "Time to Full Charge: %lld min" : {
 
     },
     "Toggle Notch Open:" : {

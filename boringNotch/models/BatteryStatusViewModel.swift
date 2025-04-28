@@ -8,11 +8,6 @@ import Defaults
 class BatteryStatusViewModel: ObservableObject {
     
     static let shared = BatteryStatusViewModel()
-    
-    private var wasCharging: Bool = false
-    private var powerSourceChangedCallback: IOPowerSourceCallbackType?
-    private var runLoopSource: Unmanaged<CFRunLoopSource>?
-    var animations: BoringAnimations = BoringAnimations()
 
     @ObservedObject var coordinator = BoringViewCoordinator.shared
 
@@ -25,6 +20,18 @@ class BatteryStatusViewModel: ObservableObject {
     @Published private(set) var timeToFullCharge: Int = 0
     @Published private(set) var statusText: String = ""
     @Published var isHoveringMenu: Bool = false
+
+    var batteryState: BatteryState {
+        return BatteryState(
+            level: levelBattery,
+            isPluggedIn: isPluggedIn,
+            isCharging: isCharging,
+            isInLowPowerMode: isInLowPowerMode,
+            maxCapacity: maxCapacity,
+            timeToFullCharge: timeToFullCharge
+        )
+    }
+    
     
     private let managerBattery = BatteryActivityManager.shared
     private var managerBatteryId: Int?

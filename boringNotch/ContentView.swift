@@ -182,10 +182,7 @@ struct ContentView: View {
 
                             HStack {
                                 BatteryIndicatorControl(
-                                    isCharging: batteryModel.isCharging,
-                                    isInLowPowerMode: batteryModel.isInLowPowerMode,
-                                    isPluggedIn: batteryModel.isPluggedIn,
-                                    levelBattery: batteryModel.levelBattery,
+                                    batteryState: batteryModel.batteryState,
                                     batteryWidth: 30,
                                     isForNotification: true
                                 )

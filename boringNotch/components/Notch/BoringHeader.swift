@@ -56,12 +56,7 @@ struct BoringHeader: View {
                     }
                     if Defaults[.showBatteryIndicator] {
                         BatteryIndicatorControl(
-                            isCharging: batteryModel.isCharging,
-                            isInLowPowerMode: batteryModel.isInLowPowerMode,
-                            isPluggedIn: batteryModel.isPluggedIn,
-                            levelBattery: batteryModel.levelBattery,
-                            maxCapacity: batteryModel.maxCapacity,
-                            timeToFullCharge: batteryModel.timeToFullCharge,
+                            batteryState: batteryModel.batteryState,
                             batteryWidth: 30,
                             isForNotification: false,
                             onHoverMenuChange: { isHovering in
