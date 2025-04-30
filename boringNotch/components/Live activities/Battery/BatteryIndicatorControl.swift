@@ -46,19 +46,6 @@ struct BatteryIndicatorControl: View {
         static let pressReleaseDelay: DispatchTime = .now() + 0.1
     }
 
-    /// Handles the tap gesture on the battery indicator.
-    private func handleTap() {
-        withAnimation(.spring(duration: AnimationConstants.animationDuration)) {
-            isPressed = true
-            DispatchQueue.main.asyncAfter(deadline: AnimationConstants.pressReleaseDelay) {
-                withAnimation(.spring(duration: AnimationConstants.animationDuration)) {
-                    isPressed = false
-                    showPopupMenu.toggle()
-                }
-            }
-        }
-    }
-
     /// The normalized battery level, clamped between 0 and 100.
     private var normalizedBatteryLevel: Float {
         return batteryState.normalizedLevel
@@ -84,9 +71,20 @@ struct BatteryIndicatorControl: View {
         }
         .scaleEffect(isPressed ? AnimationConstants.pressedScale : AnimationConstants.normalScale)
         .animation(.spring(duration: AnimationConstants.animationDuration), value: isPressed)
-        .onTapGesture {
-            handleTap()
-        }
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    withAnimation {
+                        isPressed = true
+                    }
+                }
+                .onEnded { _ in
+                    withAnimation {
+                        isPressed = false
+                        showPopupMenu.toggle()
+                    }
+                }
+        )
         .popover(
             isPresented: $showPopupMenu,
             arrowEdge: .bottom) {
